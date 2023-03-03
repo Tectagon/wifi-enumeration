@@ -1,0 +1,68 @@
+#!/bin/python3
+
+#import
+import sys
+import subprocess as sp
+import netifaces
+
+#check input
+if(len(sys.argv) != 2):
+	print("usage: ./wifi_enumeration <interface>")
+	exit(1)
+
+#check interface exist
+def checkInterface(interface):
+	found=False
+	interface=sys.argv[1]
+	interfaces = netifaces.interfaces()
+	for intface in interfaces:
+		if intface == interface:
+			found=True
+	if not found:
+		print("interface " + interface + " not found")
+		exit(1)
+
+#switch interface mode
+def switchInterfaceMode(interface, on):
+	try:
+		# monitor mode
+		if on:
+			sp.run(["ip", "link", "set", interface, "down"])
+			sp.run(["iw", interface, "set", "monitor", "none"])
+			sp.run(["ip", "link", "set", interface, "up"])
+		# managed mode
+		else:
+			sp.run(["ip", "link", "set", interface, "down"])
+			sp.run(["iw", interface, "set", "type", "managed"])
+			sp.run(["ip", "link", "set", interface, "up"])
+	except:
+		print("error changing interface mode")
+		exit(1)
+
+#enumerate wifis
+def enumerateWifis(interface):
+	try:
+		sp.run(["wpa_supplicant", "-i"+interface, "-c", "/etc/wpa_supplicant/wpa_supplicant.conf"], stdout=sp.PIPE)
+		result = sp.run(["iwlist", interface, "scan"], stdout=sp.PIPE).stdout.decode('utf-8')
+		return result
+	except:
+		print("error enumerating wifis")
+		return ""
+
+#Get interface
+interface=sys.argv[1]
+
+#Check interface exist
+checkInterface(interface)
+
+#Switch interface to monitor mode
+switchInterfaceMode(interface, True)
+
+#Enumerate wifis
+wifis=enumerateWifis(interface)
+print(wifis)
+
+#Switch interface back to managed mode
+switchInterfaceMode(interface, False)
+
+print("pass")
