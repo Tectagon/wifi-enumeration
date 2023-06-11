@@ -1,4 +1,4 @@
-/******************************************************** 
+/********************************************************
 aim is to create a script we are confident is stealth
 no knocking clients off
 router can log this 
@@ -11,9 +11,12 @@ router can log this
 #include <pcap.h>
 typedef struct wlan_packet_s
 {
-    uint8_t header_version;  // radiotap protocol version - always zero?
-    uint8_t header_padding1; // padding
-    uint16_t header_length; // header length
+    uint8_t hdr_version;             // radiotap protocol version - always zero?
+    uint8_t hdr_padding1;            // padding
+    uint16_t hdr_length;             // header length
+    uint32_t hdr_pflags;             // header present flags
+    uint8_t hdr_flags;               // header flags
+    uint8_t hdr_data_rate;
 } wlan_packet_t;
 char wlan[10];
 int monitor_mode();
@@ -88,8 +91,11 @@ void packet_handler(
 {    
     wlan_packet_t * packet;
     packet = (wlan_packet_t *) packet_body;
-    printf("version: %d\n", ntohs(packet->header_version));
-    printf("length: %d\n", (packet->header_length));
+    printf("*************************\n");
+    printf("version: %d\n", ntohs(packet->hdr_version));
+    printf("length: %d\n", (packet->hdr_length));
+    printf("data rate: %d Mb/s\n", (packet->hdr_data_rate));
+    printf("*************************\n");
 }
 
 int main(int argc, char * argv[])
